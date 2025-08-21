@@ -1,66 +1,28 @@
-mp.utils = require("mp.utils") -- Required for selene to work properly
-local utils = mp.utils
+local utils = require("mp.utils")
 local SelectionMenu = require('modules.selectionmenu')
+local mpopt = require('mp.options')
 
-function trim(s)
-    return s:gsub('^%s*(.-)%s*$', '%1')
-end
-
-function read_config(path, default)
-    local ret = {}
-
-    if default then
-        for key, value in pairs(default) do
-            ret[key] = value
-        end        
-    end        
-
-    local file = io.open(path, 'r')
-
-    if file then
-        for line in file:lines() do
-            line = trim(line)
-            if line:find('^#') == nil then
-                local i = line:find('=')
-                if i ~= nil and i > 0 then
-                    local key = trim(line:sub(0, i-1))
-                    local value = trim(line:sub(i+1))
-                    ret[key] = value
-                end
-            end
-        end
-
-        file:close()
-    end
-
-    return ret
-end
-
-local default_config = {
-    secondary_sub_area=0.25,
-    secondary_sub_lang=''
+-- Read config
+local config = {
+    secondary_sub_area = 0.25,
+    secondary_sub_lang = 'en',
+    dev_mode = false,
 }
+mpopt.read_options(config)
 
-local config = read_config(mp.get_script_directory() .. '/migaku_mpv.cfg', default_config)
-
-local secondary_sub_area = tonumber(config['secondary_sub_area'])
-
-local secondary_sub_langs = {}
-for lang in config['secondary_sub_lang']:gmatch('([^,(?! )]+)') do
-    table.insert(secondary_sub_langs, lang)
-end
-
-
+-- Which submode to use
 local SubMode = {
     Default = 1,
     Reading = 2,
     Recall = 3,
     Hidden = 4,
 }
-
 local sub_mode = SubMode.Default
-local sub_pause_time = nil
+-- When to pause for when using recall mode
+local recall_mode_sub_pause_time = nil
 
+-- Menu for choosing audio track to resync subtitles to
+local resync_menu = SelectionMenu:create('Select track to sync current subtitles to:', {}, 26, 32)
 
 local function file_exists(name)
     local f = io.open(name, 'r')
@@ -71,7 +33,6 @@ local function file_exists(name)
         return false
     end
 end
- 
 
 local function get_ipc_handle()
     local ipc_handle_path = mp.get_property('input-ipc-server')
@@ -89,10 +50,8 @@ local function get_ipc_handle()
     return ipc_handle_path
 end
 
-
 local function get_active_subtitle_track_path(secondary, only_external)
     local track_selected_val = secondary and '1' or '0'
-    only_external = only_external == true
 
     local sub_track_path
     local tracks_count = mp.get_property_number('track-list/count')
@@ -117,7 +76,6 @@ local function get_active_subtitle_track_path(secondary, only_external)
     return sub_track_path
 end
 
-
 local function get_active_audio_tack()
     local tracks_count = mp.get_property_number('track-list/count')
 
@@ -135,15 +93,15 @@ local function get_active_audio_tack()
     return '-1'
 end
 
-
 local function is_sub_codec_supported(codec)
     local supported = { 'subrip', 'ass' }
     for _, v in pairs(supported) do
-        if v == codec then return true end
+        if v == codec then
+            return true
+        end
     end
     return false
 end
-
 
 local function get_retime_sync_source_list()
 
@@ -206,7 +164,6 @@ local function get_retime_sync_source_list()
     return ret
 end
 
-
 local function on_initialize()
     -- get ipc handle
     local ipc_handle = get_ipc_handle()
@@ -216,34 +173,28 @@ local function on_initialize()
         return
     end
 
-    local cwd_path = mp.get_script_directory()
-
-    -- launch server
-
-    local dev_flag_path = cwd_path .. '/dev_flag'
-
-    -- Check if dev flag is present. In that case the server is launched manually
-    if file_exists(dev_flag_path) then
+    -- Check if dev mode. In that case the server is launched manually
+    if config.dev_mode then
         mp.msg.info('IPC available: ' .. ipc_handle)
         return
     end
 
+    -- launch server
     local cmd_args = {}
-
-    local script_path = cwd_path .. '/migaku_mpv.py'
-
-    local venv_path = cwd_path .. '/.venv/bin'
+    local script_directory = mp.get_script_directory()
+    local script_path = script_directory .. '/migaku_mpv.py'
+    local venv_path = script_directory .. '/.venv/bin'
     -- Run as py script if exists
     if file_exists(script_path) then
         mp.msg.info('Starting Migaku mpv server (script)')
 
         -- Attempt to run with virtual environment if possible
         if file_exists(venv_path) then
-            cmd_args = { venv_path .. '/python3', script_path }
+            cmd_args = { venv_path .. '/python', script_path }
         else
-            cmd_args = { 'python3', script_path }
+            cmd_args = { 'python', script_path }
         end
-    -- Otherwise try binary
+        -- Otherwise try binary
     else
         mp.msg.info('Starting Migaku mpv server (binary)')
         local script_command = mp.get_script_directory() .. '/migaku_mpv'
@@ -251,34 +202,33 @@ local function on_initialize()
     end
 
     table.insert(cmd_args, ipc_handle)
-    
+
     mp.command_native_async(
-        { name = 'subprocess', args = cmd_args, playback_only = false, capture_stderr = true },
-        function()
-            mp.osd_message('The Migaku plugin shut down.\n\n' ..
-                           'If you think this is an error please submit a bug report and attach log.txt from the plugin directory.\n\n' ..
-                           'Thank you!\n\n' ..
-                           'Also note that you can only use the Migaku plugin from one mpv instance at a time.',
-                           15.0)
-        end
+            { name = 'subprocess', args = cmd_args, playback_only = false, capture_stderr = true },
+            function()
+                mp.osd_message('The Migaku plugin shut down.\n\n' ..
+                        'If you think this is an error please submit a bug report and attach log.txt from the plugin directory.\n\n' ..
+                        'Thank you!\n\n' ..
+                        'Also note that you can only use the Migaku plugin from one mpv instance at a time.',
+                        15.0)
+            end
     )
 end
-
 
 local function on_subtitle(_, value)
     -- ignore subtitle clear callbacks
     if value == nil or value == "" then
         return
     end
-    
+
     -- Pause in reading mode
     if sub_mode == SubMode.Reading then
         mp.set_property_native('pause', true)
     end
 
     -- Setup time for recall mode
-    if sub_mode  == SubMode.Recall then
-        sub_pause_time = mp.get_property_number('sub-end') + mp.get_property_number('sub-delay')
+    if sub_mode == SubMode.Recall then
+        recall_mode_sub_pause_time = mp.get_property_number('sub-end') + mp.get_property_number('sub-delay')
     end
 
     -- Fetch and send current subtitle start to script
@@ -290,21 +240,20 @@ local function on_subtitle(_, value)
     mp.commandv('script-message', '@migaku', 'sub-start', sub_start)
 end
 
-
 local function on_time_pos_change(_, value)
-    if value == nil or sub_pause_time == nil then
+    if value == nil or recall_mode_sub_pause_time == nil then
         return
     end
 
     if sub_mode ~= SubMode.Recall then
-        sub_pause_time = nil
+        recall_mode_sub_pause_time = nil
         return
     end
 
-    local sub_show_window_start = sub_pause_time - 0.125
-    local pause_window_start = sub_pause_time - 0.075
-    local window_end = sub_pause_time
-    
+    local sub_show_window_start = recall_mode_sub_pause_time - 0.125
+    local pause_window_start = recall_mode_sub_pause_time - 0.075
+    local window_end = recall_mode_sub_pause_time
+
     -- Workaround: OSD sometimes isn't properly updated when pausing, so show subs a bit earlier
     if value > sub_show_window_start and value <= window_end then
         mp.set_property_native('sub-visibility', true)
@@ -312,17 +261,15 @@ local function on_time_pos_change(_, value)
 
     if value > pause_window_start and value <= window_end then
         mp.set_property_native('pause', true)
-        sub_pause_time = nil
+        recall_mode_sub_pause_time = nil
     end
 end
-
 
 local function on_pause_change(_, value)
     if sub_mode == SubMode.Recall then
         mp.set_property_native('sub-visibility', value)
     end
 end
-
 
 local function remove_parsed_subtitles(only_inactive)
     local tracks_count = mp.get_property_number('track-list/count')
@@ -337,11 +284,10 @@ local function remove_parsed_subtitles(only_inactive)
                     local track_id = mp.get_property(string.format('track-list/%d/id', i))
                     mp.commandv('sub-remove', track_id)
                 end
-            end                
+            end
         end
     end
 end
-
 
 local function on_script_message(cmd, ...)
     if cmd == 'remove_inactive_parsed_subs' then
@@ -365,7 +311,6 @@ local function on_script_message(cmd, ...)
         end
     end
 end
-
 
 local function on_migaku_open()
     -- get subtitle path
@@ -405,14 +350,9 @@ local function on_migaku_open()
     mp.commandv('script-message', '@migaku', 'open', cwd, pid, file_name, audio_track, sub_path, secondary_sub_path, sub_delay, resx, resy)
 end
 
-
-local resync_menu = SelectionMenu:create('Select track to sync current subtitles to:', {}, 26, 32)
-
 local function on_resync_menu_confirm(entry)
     mp.commandv('script-message', '@migaku', 'resync', resync_menu.resync_external_sub, entry.path, entry.ff_id)
 end
-
-resync_menu.on_confirm = on_resync_menu_confirm
 
 local function on_migaku_resync()
     local external_sub = get_active_subtitle_track_path(false, true)
@@ -434,7 +374,6 @@ local function on_migaku_resync()
     resync_menu:open()
 end
 
-
 local function on_mouse_move(_, value)
     local secondary_subs_enabled = value['hover']
 
@@ -442,18 +381,22 @@ local function on_mouse_move(_, value)
         local y = value['y']
         local h = mp.get_property_native('osd-dimensions/h')
 
-        local pos = y/h;
+        local pos = y / h;
 
-        secondary_subs_enabled = pos < secondary_sub_area
+        secondary_subs_enabled = pos < tonumber(config['secondary_sub_area'])
     end
 
     mp.set_property_native('secondary-sub-visibility', secondary_subs_enabled)
 end
 
-
 local function get_auto_secondary_sid()
-    local tracks_count = mp.get_property_number('track-list/count')
+    -- Get secondary subtitle language from config
+    local secondary_sub_langs = {}
+    for lang in config['secondary_sub_lang']:gmatch('([^,(?! )]+)') do
+        table.insert(secondary_sub_langs, lang)
+    end
 
+    local tracks_count = mp.get_property_number('track-list/count')
     for _, lang in pairs(secondary_sub_langs) do
         -- first try external, then internal sub tracks
         for check_internal = 0, 1 do
@@ -476,21 +419,20 @@ local function get_auto_secondary_sid()
     return nil
 end
 
-
-local function on_loaded()
+local function on_file_loaded()
     local secondary_sid = get_auto_secondary_sid()
     if secondary_sid ~= nil then
         mp.set_property('secondary-sid', secondary_sid)
     end
 end
 
-
+resync_menu.on_confirm = on_resync_menu_confirm
 
 mp.observe_property('sub-text', 'string', on_subtitle)
 mp.observe_property('time-pos', 'number', on_time_pos_change)
 mp.observe_property('pause', 'bool', on_pause_change)
 mp.observe_property('mouse-pos', 'native', on_mouse_move)
-mp.register_event('file-loaded', on_loaded)
+mp.register_event('file-loaded', on_file_loaded)
 mp.register_script_message('@migakulua', on_script_message)
 mp.add_key_binding('b', 'migaku-open', on_migaku_open)
 mp.add_key_binding('B', 'migaku-resync', on_migaku_resync)
