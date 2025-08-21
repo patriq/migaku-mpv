@@ -14,7 +14,7 @@ import traceback
 import platform
 import pysubs2
 import codecs
-import cchardet as chardet
+# import cchardet as chardet
 import requests
 import urllib.parse
 import urllib.request
@@ -24,8 +24,6 @@ from utils.server import HttpServer, HttpResponse
 from utils.ankiexport import AnkiExporter
 import utils.browser_support as browser_support
 
-
-dev_mode = os.path.exists('./dev_flag')
 
 plugin_is_packaged = getattr(sys, 'frozen', False)          # if built with pyinstaller
 
@@ -661,6 +659,22 @@ def find_executable(name, config_name=None):
     return shutil.which(name)   # Set to none when not found
 
 
+def load_config(config_path):
+    # Load config
+    config_f = open(config_path, 'r', encoding="utf-8")
+    for line in config_f:
+        line = line.strip()
+        if line.startswith('#'):
+            continue
+        equals_pos = line.find('=')
+        if equals_pos < 0:
+            continue
+        key = line[0:equals_pos].strip()
+        if key == '':
+            continue
+        value = line[equals_pos + 1:].strip()
+        config[key] = value
+    config_f.close()
 
 def main():
     global log_file
@@ -684,8 +698,14 @@ def main():
 
     install_except_hooks()
 
+    # Load config
+    config_path = plugin_dir + '/migaku_mpv.cfg'
+    if len(sys.argv) >= 3:
+        config_path = sys.argv[2]
+    load_config(config_path)
+
     # Redirect stdout/stderr to log file if built for release
-    if not dev_mode:
+    if config.get('dev_mode', 'no').lower() == 'no':
         print('Redirecting stout and stderr to log.txt...')
         log_file = open(plugin_dir + '/log.txt', 'w', encoding='utf8')
         sys.stdout = log_file
@@ -698,29 +718,10 @@ def main():
         print('ARGS: Usage: %s mpv-ipc-handle [config path]' % sys.argv[0])
         return
 
-    config_path = plugin_dir + '/migaku_mpv.cfg'
-    if len(sys.argv) >= 3:
-        config_path = sys.argv[2]
-
     # Clear/create temp dir
     shutil.rmtree(tmp_dir, ignore_errors=True)
     os.makedirs(tmp_dir, exist_ok=True)
 
-    # Load config
-    config_f = open(config_path, 'r', encoding="utf-8")
-    for line in config_f:
-        line = line.strip()
-        if line.startswith('#'):
-            continue
-        equals_pos = line.find('=')
-        if equals_pos < 0:
-            continue
-        key = line[0:equals_pos].strip()
-        if key == '':
-            continue
-        value = line[equals_pos+1:].strip()
-        config[key] = value
-    config_f.close()
     print('CFG:', config)
 
     host = config.get('host', '127.0.0.1')
