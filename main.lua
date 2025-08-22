@@ -182,7 +182,7 @@ local function on_initialize()
     -- launch server
     local cmd_args = {}
     local script_directory = mp.get_script_directory()
-    local script_path = script_directory .. '/migaku_mpv.py'
+    local script_path = script_directory .. '/backend/migaku_mpv.py'
     local venv_path = script_directory .. '/.venv/Scripts'
     -- Run as py script if exists
     if file_exists(script_path) then

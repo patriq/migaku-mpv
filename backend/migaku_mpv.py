@@ -15,12 +15,12 @@ import psutil
 
 import subtitle_manager
 import utils.browser_support as browser_support
+from ankiexport import AnkiExporter
 from config import Config
 from executables import Executables
 from mpv_last_state import MpvLastState
 from queue_handler import QueueHandler
 from subtitle_manager import load_subs_from_info, SubtitleLoadError
-from utils.ankiexport import AnkiExporter
 from utils.mpv_ipc import MpvIpc
 from utils.server import HttpServer, HttpResponse
 
@@ -28,7 +28,7 @@ from utils.server import HttpServer, HttpResponse
 if getattr(sys, 'frozen', False):
     plugin_dir = os.path.dirname(sys.executable)
 else:
-    plugin_dir = os.path.dirname(os.path.abspath(__file__))
+    plugin_dir = os.path.dirname(os.path.abspath(__file__)) + '/..'
 
 # Temporary directory to store stuff, gets cleared on startup and shutdown
 tmp_dir = os.path.join(plugin_dir, 'tmp')
