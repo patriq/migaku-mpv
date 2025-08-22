@@ -341,13 +341,10 @@ local function on_migaku_open()
     local resx = mp.get_property('video-params/w')
     local resy = mp.get_property('video-params/h')
 
-    -- get mpv cwd
-    local cwd = utils.getcwd()
-
     -- get mpv pid
     local pid = utils.getpid()
 
-    mp.commandv('script-message', '@migaku', 'open', cwd, pid, file_name, audio_track, sub_path, secondary_sub_path, sub_delay, resx, resy)
+    mp.commandv('script-message', '@migaku', 'open', pid, file_name, audio_track, sub_path, secondary_sub_path, sub_delay, resx, resy)
 end
 
 local function on_resync_menu_confirm(entry)

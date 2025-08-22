@@ -24,6 +24,7 @@ if platform.system() == 'Windows':
         associations = {
             'chrome':   'chrome',
             'edge':     'msedge',
+            'firefox':  'firefox',
         }
 
         if name_lower not in associations:
