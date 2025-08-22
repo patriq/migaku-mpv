@@ -63,7 +63,7 @@ local function get_active_subtitle_track_path(secondary, only_external)
 
         if track_type == 'sub' and track_selected == 'yes' and track_selected_main == track_selected_val then
             sub_track_path = mp.get_property(string.format('track-list/%d/external-filename', i))
-            if sub_track_path == nil and not(only_external) then
+            if sub_track_path == nil and not (only_external) then
                 local track_ff_index = mp.get_property(string.format('track-list/%d/ff-index', i))
                 local track_codec = mp.get_property(string.format('track-list/%d/codec', i))
                 sub_track_path = string.format('%s*%s', track_ff_index, track_codec)
@@ -114,7 +114,7 @@ local function get_retime_sync_source_list()
         local track_type = mp.get_property(string.format('track-list/%d/type', i))
         local track_codec = mp.get_property(string.format('track-list/%d/codec', i))
 
-        if track_type == 'audio' or (track_type == 'sub' and not(track_selected) and is_sub_codec_supported(track_codec)) then
+        if track_type == 'audio' or (track_type == 'sub' and not (track_selected) and is_sub_codec_supported(track_codec)) then
             local track_id = mp.get_property(string.format('track-list/%d/id', i))
             local track_title = mp.get_property(string.format('track-list/%d/title', i))
             local track_lang = mp.get_property(string.format('track-list/%d/lang', i))
@@ -183,7 +183,7 @@ local function on_initialize()
     local cmd_args = {}
     local script_directory = mp.get_script_directory()
     local script_path = script_directory .. '/migaku_mpv.py'
-    local venv_path = script_directory .. '/.venv/bin'
+    local venv_path = script_directory .. '/.venv/Scripts'
     -- Run as py script if exists
     if file_exists(script_path) then
         mp.msg.info('Starting Migaku mpv server (script)')

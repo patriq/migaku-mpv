@@ -23,3 +23,7 @@ Open any media file and select the primary and secondary subtitles you want to u
 # License
 
 GNU General Public License v3 (See [COPYING](./COPYING))
+
+# Python Version
+
+This script requires Python 3.13 or later to run. Make sure you have it installed on your system.
