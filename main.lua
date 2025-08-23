@@ -184,8 +184,8 @@ local function on_initialize()
     local script_directory = mp.get_script_directory()
     local script_path = script_directory .. '/backend/migaku_mpv.py'
     local venv_path = script_directory .. '/.venv/Scripts'
-    -- Run as py script if exists
-    if file_exists(script_path) then
+    -- Run as py script if exists and in dev mode
+    if config.dev_mode and file_exists(script_path) then
         mp.msg.info('Starting Migaku mpv server (script)')
 
         -- Attempt to run with virtual environment if possible
@@ -194,8 +194,8 @@ local function on_initialize()
         else
             cmd_args = { 'python', script_path }
         end
-        -- Otherwise try binary
     else
+        -- Otherwise try binary
         mp.msg.info('Starting Migaku mpv server (binary)')
         local script_command = mp.get_script_directory() .. '/migaku_mpv'
         cmd_args = { script_command }
