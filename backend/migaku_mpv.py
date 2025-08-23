@@ -121,32 +121,28 @@ def get_handler_data(socket):
 
 # Handler to update last added Anki card
 def post_handler_anki(socket, data):
-    r = HttpResponse()
-    r.send(socket)
-
     if mpv_last_state.audio_track < 0:
         mpv.show_text('Please select an audio track before opening Migaku MPV if you want to export Anki cards.')
         return
 
     # Get the provided card
-    cards = json.loads(data.decode())
-    if len(cards) != 1:
-        mpv.show_text('Please select only one card to export to Anki.', 8.0)
-        return
+    card = json.loads(data.decode())
 
     # Fetch the card data to apply to the last note
-    card = cards[0]
-    text = card['text']
     translation_text = card['translation_text']
     start = card['start'] / 1000.0
     end = card['end'] / 1000.0
 
     try:
         anki_exporter.update_last_note(
-            mpv_last_state.media_path, mpv_last_state.audio_track, text, translation_text, start, end)
+            mpv_last_state.media_path, mpv_last_state.audio_track, translation_text, start, end)
         mpv.show_text('Last card updated successfully.', 8.0)
     except AnkiExporter.ExportError as e:
         mpv.show_text('Exporting card failed:\n\n' + str(e), 8.0)
+
+    # Send a response back to the browser
+    r = HttpResponse()
+    r.send(socket)
 
 
 # Handler to control MPV from the browser (hate how we just forward everything to MPV IPC)
