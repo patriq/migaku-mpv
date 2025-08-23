@@ -380,7 +380,7 @@ def main():
 
     # Setup server
     server = HttpServer(config.host, range(config.port, config.port_max + 1))
-    server.set_get_file_server('/', plugin_dir + '/migaku_mpv.html')
+    server.set_get_file_server('/', plugin_dir + '/index.html')
     for path in ['/icons/migakufavicon.png', '/icons/anki.png', '/icons/bigsearch.png']:
         server.set_get_file_server(path, plugin_dir + path)
     server.set_get_handler('/subs', get_handler_subs)

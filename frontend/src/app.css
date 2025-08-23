@@ -1,0 +1,11 @@
+@import 'tailwindcss';
+
+body {
+    font-family: 'Noto Sans JP', sans-serif;
+    @apply bg-gray-950 text-white;
+}
+
+/* Allows for underline even when Migaku hijacks our DOM  */
+.force-hover-underline, .force-hover-underline span {
+    @apply hover:underline!;
+}
