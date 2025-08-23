@@ -52,7 +52,7 @@ class AnkiExporter:
     def get_media_path(self):
         return self._invoke_anki_connect('getMediaDirPath')
 
-    def update_last_note(self, media_file, audio_track, text_primary, text_secondary, time_start, time_end):
+    def update_last_note(self, media_file, audio_track, text_secondary, time_start, time_end):
         # Warning: You must not be viewing the note that you are updating on your Anki browser, otherwise the fields
         # will not update. See this issue for further details: https://github.com/FooSoft/anki-connect/issues/82
         self._invoke_anki_connect('guiBrowse', query='nid:1')
