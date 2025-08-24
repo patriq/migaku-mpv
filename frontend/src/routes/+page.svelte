@@ -58,7 +58,7 @@
       eventSource.close();
     };
 
-    eventSource.onopen = function (e) {
+    eventSource.onopen = function () {
       console.log('[OPEN]');
     }
 
@@ -116,7 +116,7 @@
   }
 
   function seek(sub: Subtitle) {
-    return (event: MouseEvent) => {
+    return (_: MouseEvent) => {
       mpvControl('seek', [sub.start / 1000, 'absolute']);
       activeSubtitleStart = sub.start;
     }
@@ -235,7 +235,6 @@
                 {sub.start === activeSubtitleStart ?
                     'bg-gray-900 border-gray-700' : 'border-gray-900 hover:border-gray-800'}"
                  data-active={sub.start === activeSubtitleStart}
-                 oncontextmenu={seek(sub)}
                  role="checkbox"
                  onclick={toggleSelect(sub)}
                  aria-checked={selectedSubtitles.has(sub)}
