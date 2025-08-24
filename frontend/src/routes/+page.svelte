@@ -194,7 +194,7 @@
     <h2 class="text-2xl">MPV Connection Closed.</h2>
 {:else}
     <!-- Header -->
-    <div class="fixed top-0 w-full flex gap-4 bg-gray-900/80 backdrop-blur-sm p-4 z-10
+    <div class="sticky top-0 w-full flex gap-4 bg-gray-900/80 backdrop-blur-sm p-4 z-10
             border-b border-gray-700 select-none">
         <!-- Sub mode -->
         <div>
@@ -241,9 +241,11 @@
                  aria-checked={selectedSubtitles.has(sub)}
             >
                 <!-- Sub text -->
-                <span>
-                    {sub.text}
-                </span>
+                {#key sub.text}
+                    <span>
+                        {sub.text}
+                    </span>
+                {/key}
 
                 <!-- Timestamps -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
