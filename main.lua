@@ -6,6 +6,7 @@ local mpopt = require('mp.options')
 local config = {
     secondary_sub_area = 0.25,
     secondary_sub_lang = 'en',
+    primary_lang = 'ja',
     dev_mode = false,
 }
 mpopt.read_options(config)
@@ -386,40 +387,67 @@ local function on_mouse_move(_, value)
     mp.set_property_native('secondary-sub-visibility', secondary_subs_enabled)
 end
 
-local function get_auto_secondary_sid()
-    -- Get secondary subtitle language from config
-    local secondary_sub_langs = {}
-    for lang in config['secondary_sub_lang']:gmatch('([^,(?! )]+)') do
-        table.insert(secondary_sub_langs, lang)
+local function parse_language_list(lang_list_string)
+    local langs = {}
+    for lang in lang_list_string:gmatch('([^,(?! )]+)') do
+        table.insert(langs, lang)
     end
+    return langs
+end
 
+local function find_external_sub_sid()
     local tracks_count = mp.get_property_number('track-list/count')
-    for _, lang in pairs(secondary_sub_langs) do
-        -- first try external, then internal sub tracks
-        for check_internal = 0, 1 do
-            for i = 0, (tracks_count - 1) do
-                local track_type = mp.get_property(string.format('track-list/%d/type', i))
-                if track_type == 'sub' then
-                    local sub_track_path = mp.get_property(string.format('track-list/%d/external-filename', i))
-                    if (sub_track_path == nil) == (check_internal == 1) then
-                        local track_id = mp.get_property(string.format('track-list/%d/id', i))
-                        local track_lang = mp.get_property(string.format('track-list/%d/lang', i))
-                        if track_lang == lang then
-                            return track_id
-                        end
-                    end
-                end
+    for i = 0, (tracks_count - 1) do
+        local track_type = mp.get_property(string.format('track-list/%d/type', i))
+        if track_type == 'sub' then
+            local external_filename = mp.get_property(string.format('track-list/%d/external-filename', i))
+            if external_filename ~= nil then
+                return mp.get_property(string.format('track-list/%d/id', i))
             end
         end
     end
+    return nil
+end
 
+local function find_track_sid(lang, type)
+    local tracks_count = mp.get_property_number('track-list/count')
+    for i = 0, (tracks_count - 1) do
+        local track_type = mp.get_property(string.format('track-list/%d/type', i))
+        if track_type == type then
+            local track_id = mp.get_property(string.format('track-list/%d/id', i))
+            local track_lang = mp.get_property(string.format('track-list/%d/lang', i))
+            if track_lang == lang then
+                return track_id
+            end
+        end
+    end
+    return nil
+end
+
+local function find_track_sid_for_langs(lang_list_string, type)
+    for _, lang in pairs(parse_language_list(lang_list_string)) do
+        local sid = find_track_sid(lang, type)
+        if sid ~= nil then
+            return sid
+        end
+    end
     return nil
 end
 
 local function on_file_loaded()
-    local secondary_sid = get_auto_secondary_sid()
+    local secondary_sid = find_track_sid_for_langs(config['secondary_sub_lang'], 'sub')
     if secondary_sid ~= nil then
         mp.set_property('secondary-sid', secondary_sid)
+    end
+
+    local primary_sid = find_track_sid_for_langs(config['primary_lang'], 'sub')
+    if primary_sid ~= nil then
+        mp.set_property('sid', primary_sid)
+    end
+
+    local primary_audio_sid = find_track_sid_for_langs(config['primary_lang'], 'audio')
+    if primary_audio_sid ~= nil then
+        mp.set_property('aid', primary_audio_sid)
     end
 end
 
