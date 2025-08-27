@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist/migaku_mpv
-          pyinstaller -F --distpath dist/migaku_mpv -n migaku_mpv -i icon.ico migaku_mpv.py --onefile
+          pyinstaller -F --distpath dist/migaku_mpv -n migaku_mpv -i icon.ico backend/migaku_mpv.py --onefile
           cp -r modules main.lua migaku_mpv.ini index.html dist/migaku_mpv/
       - name: Build (ffsubsync)
         shell: bash
