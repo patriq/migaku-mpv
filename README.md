@@ -11,7 +11,7 @@ Install the latest mpv version ([Downloads](https://mpv.io/installation/)).
 
 Start it at least once to create the configuration folders.
 
-[Download](https://github.com/migaku-official/migaku-mpv/releases/latest) the latest release of Migaku MPV for your
+[Download](https://github.com/patriq/migaku-mpv/releases/latest) the latest release of Migaku MPV for your
 operating system under releases.
 
 mpv folder is:
@@ -21,7 +21,7 @@ mpv folder is:
 
 If it doesn't exist yet, create the `scripts` folder and the `scripts-opts` folder inside the `mpv` folder.
 
-Extract the `migaku_mpv` folder from the downloaded archive into the `scripts` folder of mpv.
+Extract the `migaku_mpv` folder from the downloaded archive into the `scripts` folder.
 
 Create the `mpv/scripts-opts/migaku_mpv.conf` (example file):
 
