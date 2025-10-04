@@ -27,6 +27,8 @@ export async function fetchStubs(url: string): Promise<Subtitle[]> {
         sub.text = nonParenthesis;
       }
     }
+    // Cleanup weird characters like x202a
+    sub.text = sub.text.replace(/[\u200B-\u200D\u202A-\u202E\u2060-\u2064\u2066-\u206F\uFEFF]/g, '');
     return sub;
   }
 
@@ -35,5 +37,7 @@ export async function fetchStubs(url: string): Promise<Subtitle[]> {
     console.error(`Failed to fetch subtitles from ${url}: ${response.statusText}`);
     return [];
   }
-  return (await response.json()).map(cleanSubText);
+  return (await response.json()).map(cleanSubText)
+    // Filter out empty subtitles
+    .filter((sub: Subtitle) => sub.text.trim().length > 0);
 }
